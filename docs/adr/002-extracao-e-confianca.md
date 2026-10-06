@@ -27,7 +27,16 @@ Na rodada 1, **nenhum erro passaria sem revisão**: todos os campos errados tinh
 
 ## Resultado no conjunto de controle
 
-A preencher após a execução com os documentos de 280 clientes que não participaram dos ajustes.
+Documentos de 280 clientes que não participaram dos ajustes, avaliados uma única vez:
+
+| Conjunto | Documentos | Campos | Acerto | Acerto com confiança alta | Para revisão | Erros que passariam sem revisão |
+|---|---|---|---|---|---|---|
+| Controle | 455 | 9.100 | **99,99%** | **100%** | 0,01% (1 campo) | **0** |
+| Desenvolvimento | 196 | 3.920 | 100% | 100% | 0% | 0 |
+
+O único erro do controle foi o GPT OSS devolver `contrato_id` vazio num documento; o Qwen3 acertou, os dois discordaram e o campo foi para revisão. O documento cuja leitura falhou por timeout foi reprocessado pela tarefa `reprocessar_falhas` e lido com sucesso na segunda tentativa.
+
+**Limitação importante:** os contratos são PDFs digitais gerados a partir de quatro modelos de redação. Contratos reais incluem digitalizações, cláusulas fora do padrão e anotações, e o acerto seria menor. O próximo passo para tornar a medida mais exigente é um lote de documentos digitalizados com ruído (ver roadmap).
 
 ## Consequências
 
