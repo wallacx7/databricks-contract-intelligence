@@ -95,7 +95,12 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--ultimo-mes", type=date.fromisoformat, default=date(2026, 9, 1),
                         help="Último mês fechado do billing.")  # fmt: skip
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--limite", type=int, default=None, help="Gera só para as N primeiras contas.")
+    parser.add_argument(
+        "--limite",
+        type=lambda v: int(v) if v else None,  # vazio = todas as contas (parâmetro opcional do job)
+        default=None,
+        help="Gera só para as N primeiras contas.",
+    )
     args = parser.parse_args(argv)
 
     from pyspark.sql import SparkSession

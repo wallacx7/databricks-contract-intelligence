@@ -26,6 +26,7 @@ dev = [
 
 [project.scripts]
 contrato-vivo-gerar = "contrato_vivo.gerador.cli:main"
+contrato-vivo-reprocessar = "contrato_vivo.reprocessar:main"
 
 [tool.hatch.metadata]
 allow-direct-references = true

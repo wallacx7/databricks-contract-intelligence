@@ -1,0 +1,30 @@
+resources:
+  jobs:
+    contrato_vivo_diario:
+      name: contrato-vivo-diario
+      description: Reenvia leituras que falharam e processa os documentos novos (leitura, extração e confiança).
+      tasks:
+        - task_key: reprocessar_falhas
+          environment_key: default
+          python_wheel_task:
+            package_name: contrato_vivo
+            entry_point: contrato-vivo-reprocessar
+            parameters:
+              - --catalog
+              - ${var.catalog}
+              - --bronze-schema
+              - ${resources.schemas.bronze.name}
+              - --contratos
+              - /Volumes/${var.catalog}/${resources.schemas.raw.name}/${resources.volumes.contratos.name}
+
+        - task_key: leitura
+          depends_on:
+            - task_key: reprocessar_falhas
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.contrato_vivo_leitura.id}
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "2"
+            dependencies:
+              - ../dist/*.whl

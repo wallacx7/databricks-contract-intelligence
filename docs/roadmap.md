@@ -5,15 +5,17 @@
 - [x] Repositório, bundle e schemas `lc_*`
 - [x] Viabilidade no Free Edition: `ai_parse_document`, extração com JSON Schema (14/14 campos numa amostra), Vector Search e Lakebase
 - [x] ADR 001: arquitetura, origem dos dados e confiança por concordância
-- [ ] Gerador de contratos e aditivos em PDF a partir do billing do Ledger, com vazamentos plantados e gabarito
-- [ ] Job do gerador e testes
+- [x] Gerador de contratos e aditivos em PDF a partir do billing do Ledger, com vazamentos plantados e gabarito
+- [x] Job do gerador e testes (2.219 documentos, 5.060 páginas na geração completa)
 
 ## Fase 1: Leitura e extração
 
-- [ ] Pipeline: Auto Loader (binário) → `ai_parse_document` → texto por página
-- [ ] Extração com dois modelos e JSON Schema, incremental (cada documento é lido uma vez)
-- [ ] Validação (expectations), concordância e ancoragem
-- [ ] Avaliação da extração por campo contra o gabarito
+- [x] Pipeline: Auto Loader (binário) → `ai_parse_document` → texto por página
+- [x] Extração com dois modelos e JSON Schema, incremental (cada documento é lido uma vez)
+- [x] Validação (expectations), concordância e ancoragem
+- [x] Avaliação da extração por campo contra o gabarito, separando desenvolvimento e controle
+- [x] Reprocessamento de leituras que falharam
+- [ ] Resultado no conjunto de controle
 
 ## Fase 2: Revisão humana
 

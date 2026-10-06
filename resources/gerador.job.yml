@@ -23,6 +23,8 @@ resources:
               - /Volumes/${var.catalog}/${resources.schemas.raw.name}/${resources.volumes.contratos.name}
               - --gabarito
               - /Volumes/${var.catalog}/${resources.schemas.raw.name}/${resources.volumes.gabarito.name}
+              - --limite
+              - "{{job.parameters.limite}}"
       environments:
         - environment_key: default
           spec:

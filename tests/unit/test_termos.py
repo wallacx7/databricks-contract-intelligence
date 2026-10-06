@@ -123,3 +123,10 @@ def test_fim_de_vigencia_e_a_vespera_do_aniversario(resultado):
     for d in (d for d in resultado.documentos if d.tipo == "contrato"):
         duracao = 36 if d.fim_vigencia.year - d.inicio_vigencia.year >= 3 else 24
         assert d.fim_vigencia == adicionar_meses(d.inicio_vigencia, duracao) - timedelta(days=1)
+
+
+def test_gabarito_do_aditivo_so_tem_o_que_esta_escrito_nele(resultado):
+    aditivo = next(d for d in resultado.documentos if d.tipo == "aditivo")
+    campos = aditivo.campos_esperados()
+    assert campos["preco_usuario"] == aditivo.preco_usuario and campos["plano"] == aditivo.plano
+    assert all(campos[c] is None for c in aditivo.CAMPOS_FORA_DO_ADITIVO)

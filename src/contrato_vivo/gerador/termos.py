@@ -82,11 +82,21 @@ class Documento:
     modelo: int  # qual dos modelos de redação o PDF usa
     vazamento_plantado: str | None = None  # só para o gabarito; não aparece no texto
 
+    # O aditivo só escreve plano, preço, usuários e data; o resto continua valendo pelo contrato original.
+    CAMPOS_FORA_DO_ADITIVO = (
+        "fim_vigencia", "periodicidade", "desconto_anual_percentual", "desconto_promocional_percentual",
+        "desconto_promocional_meses", "reajuste_tipo", "reajuste_percentual", "minimo_usuarios",
+        "multa_percentual", "multa_limite_mensalidades",
+    )  # fmt: skip
+
     def campos_esperados(self) -> dict:
-        """Valores que a extração precisa encontrar neste documento."""
+        """Valores que a extração precisa encontrar no texto deste documento."""
         campos = asdict(self)
         for interno in ("modelo", "vazamento_plantado", "account_id", "uf", "setor"):
             campos.pop(interno)
+        if self.tipo == "aditivo":
+            for campo in self.CAMPOS_FORA_DO_ADITIVO:
+                campos[campo] = None
         for k, v in campos.items():
             if isinstance(v, date):
                 campos[k] = v.isoformat()

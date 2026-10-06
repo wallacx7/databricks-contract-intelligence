@@ -18,6 +18,9 @@ variables:
   llm_endpoint:
     description: Modelo servido no workspace usado na extração e nas respostas.
     default: databricks-gpt-oss-120b
+  llm_segundo_modelo:
+    description: Segundo modelo, usado para medir a concordância da extração (ADR 002).
+    default: databricks-qwen3-next-80b-a3b-instruct
 
 artifacts:
   contrato_vivo_wheel:

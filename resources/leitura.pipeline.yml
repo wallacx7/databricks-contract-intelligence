@@ -1,0 +1,23 @@
+resources:
+  pipelines:
+    contrato_vivo_leitura:
+      name: contrato-vivo-leitura
+      catalog: ${var.catalog}
+      schema: ${resources.schemas.silver.name}
+      serverless: true
+      channel: CURRENT
+      root_path: ../src/pipelines/leitura
+      libraries:
+        - file:
+            path: ../src/pipelines/leitura/leitura.py
+        - file:
+            path: ../src/pipelines/leitura/avaliacao.py
+      configuration:
+        contrato_vivo.catalog: ${var.catalog}
+        contrato_vivo.raw_schema: ${resources.schemas.raw.name}
+        contrato_vivo.bronze_schema: ${resources.schemas.bronze.name}
+        contrato_vivo.silver_schema: ${resources.schemas.silver.name}
+        contrato_vivo.contratos_path: /Volumes/${var.catalog}/${resources.schemas.raw.name}/${resources.volumes.contratos.name}
+        contrato_vivo.gabarito_path: /Volumes/${var.catalog}/${resources.schemas.raw.name}/${resources.volumes.gabarito.name}
+        # O primeiro modelo é o principal; o segundo serve para medir a concordância (ADR 002).
+        contrato_vivo.modelos: ${var.llm_endpoint},${var.llm_segundo_modelo}
