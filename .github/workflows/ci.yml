@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  qualidade:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -e ".[dev,dbt,agente]"
+      - name: Lint
+        run: |
+          ruff check .
+          ruff format --check .
+      - name: Testes
+        run: pytest -q
+        env:
+          MLFLOW_DISABLE_AGENT_HINT: "1"
+      - name: Validar projeto dbt
+        working-directory: dbt
+        run: dbt parse --profiles-dir ci
+
+  bundle:
+    runs-on: ubuntu-latest
+    needs: qualidade
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: databricks/setup-cli@main
+      - name: Validar bundle
+        if: env.DATABRICKS_HOST != ''
+        run: databricks bundle validate -t dev

@@ -101,3 +101,13 @@ def test_avaliacao_confere_valor_e_pagina_citada():
     assert pagina_errada.valor_ok and pagina_errada.citacao_ok is False and not pagina_errada.acertou
     recusa = Caso("x", "fora_do_escopo", "?", recusa=True)
     assert conferir(recusa, Resposta("?", "Não encontrei essa informação nos contratos.")).acertou
+
+
+def test_hifen_tipografico_e_datas_formatadas():
+    from contrato_vivo.agente.avaliacao import Caso, conferir
+    from contrato_vivo.agente.nucleo import Resposta
+
+    caso = Caso("v", "vigencia", "?", textos=["09/02/2023"], documento="CT-2021-000310", paginas=[2])
+    r = conferir(caso, Resposta("?", "Termina em 09/02/2023 (CT‑2021‑000310, p. 2)."))
+    assert r.valor_ok and r.citacao_ok
+    assert apresentar({"campo": "fim_vigencia", "valor": "2023-02-09"})["valor"] == "09/02/2023"

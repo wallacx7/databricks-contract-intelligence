@@ -139,6 +139,17 @@ def decidir(conn, item: dict, decisao: str, revisor: str, valor_corrigido: str |
     conn.commit()
 
 
+def pular(conn, item_id: str, revisor: str) -> None:
+    """Devolve o item à fila marcado como pulado, para o mesmo revisor não recebê-lo de novo em seguida."""
+    with conn.cursor() as cur:
+        cur.execute(f"DELETE FROM {ESQUEMA}.reservas WHERE item_id = %s", (item_id,))
+        cur.execute(
+            f"INSERT INTO {ESQUEMA}.reservas (item_id, revisor) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+            (item_id, f"pulado:{revisor}"),
+        )
+    conn.commit()
+
+
 def decididos(conn) -> set[str]:
     with conn.cursor() as cur:
         cur.execute(f"SELECT item_id FROM {ESQUEMA}.decisoes")

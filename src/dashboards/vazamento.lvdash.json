@@ -1,0 +1,761 @@
+{
+  "datasets": [
+    {
+      "name": "resumo",
+      "displayName": "Resumo do vazamento",
+      "queryLines": [
+        "SELECT\n",
+        "  (SELECT count(DISTINCT contrato_id) FROM termos_mensais) AS contratos_analisados,\n",
+        "  count(DISTINCT contrato_id) AS contratos_com_vazamento,\n",
+        "  sum(vazamento_acumulado) AS vazamento_acumulado,\n",
+        "  sum(vazamento_mes_atual) AS vazamento_mes_atual,\n",
+        "  sum(recuperavel_12_meses) AS recuperavel_12_meses\n",
+        "FROM vazamento_por_contrato\n"
+      ]
+    },
+    {
+      "name": "por_tipo",
+      "displayName": "Vazamento por tipo",
+      "queryLines": [
+        "SELECT CASE tipo WHEN 'desconto_vencido' THEN 'Desconto vencido' WHEN 'preco_abaixo' THEN 'Preço abaixo do contratado' WHEN 'reajuste_nao_aplicado' THEN 'Reajuste não aplicado' ELSE 'Mínimo não cobrado' END AS tipo, sum(vazamento_acumulado) AS vazamento_acumulado, count(DISTINCT contrato_id) AS contratos\n",
+        "FROM vazamento_por_contrato GROUP BY 1\n"
+      ]
+    },
+    {
+      "name": "mensal",
+      "displayName": "Vazamento mensal",
+      "queryLines": [
+        "SELECT mes, CASE tipo WHEN 'desconto_vencido' THEN 'Desconto vencido' WHEN 'preco_abaixo' THEN 'Preço abaixo do contratado' WHEN 'reajuste_nao_aplicado' THEN 'Reajuste não aplicado' ELSE 'Mínimo não cobrado' END AS tipo, sum(vazamento) AS vazamento\n",
+        "FROM vazamento_mensal\n",
+        "WHERE mes >= add_months((SELECT max(mes) FROM vazamento_mensal), -23)\n",
+        "GROUP BY 1, 2\n"
+      ]
+    },
+    {
+      "name": "contratos",
+      "displayName": "Maiores vazamentos",
+      "queryLines": [
+        "SELECT contrato_id, cliente, CASE tipo WHEN 'desconto_vencido' THEN 'Desconto vencido' WHEN 'preco_abaixo' THEN 'Preço abaixo do contratado' WHEN 'reajuste_nao_aplicado' THEN 'Reajuste não aplicado' ELSE 'Mínimo não cobrado' END AS tipo, vazamento_acumulado, vazamento_mes_atual, recuperavel_12_meses\n",
+        "FROM vazamento_por_contrato\n",
+        "ORDER BY recuperavel_12_meses DESC, vazamento_acumulado DESC\n",
+        "LIMIT 20\n"
+      ]
+    },
+    {
+      "name": "qualidade",
+      "displayName": "Qualidade da extração",
+      "queryLines": [
+        "SELECT documentos, campos, campos_automaticos / campos AS automatico, campos_revisados, campos_pendentes,\n",
+        "       acerto_medido_na_auditoria, auditoria_revisada\n",
+        "FROM qualidade_extracao\n"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "vazamento",
+      "displayName": "Vazamento",
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layout": [
+        {
+          "widget": {
+            "name": "titulo",
+            "multilineTextboxSpec": {
+              "lines": [
+                "# Vazamento de receita nos contratos\n",
+                "Contratos lidos por IA e reconciliados com o billing. Valores em reais; meses fechados."
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 6,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "k_analisados",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "resumo",
+                  "fields": [
+                    {
+                      "name": "contratos_analisados",
+                      "expression": "`contratos_analisados`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "contratos_analisados",
+                  "displayName": "Contratos analisados"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Contratos analisados"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 1,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "k_com",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "resumo",
+                  "fields": [
+                    {
+                      "name": "contratos_com_vazamento",
+                      "expression": "`contratos_com_vazamento`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "contratos_com_vazamento",
+                  "displayName": "Com vazamento"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Com vazamento"
+              }
+            }
+          },
+          "position": {
+            "x": 1,
+            "y": 2,
+            "width": 1,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "k_acum",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "resumo",
+                  "fields": [
+                    {
+                      "name": "vazamento_acumulado",
+                      "expression": "`vazamento_acumulado`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "vazamento_acumulado",
+                  "displayName": "Não cobrado (acumulado)"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Não cobrado (acumulado)",
+                "showDescription": true,
+                "description": "Desde o início de cada contrato"
+              }
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 2,
+            "width": 1,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "k_mes",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "resumo",
+                  "fields": [
+                    {
+                      "name": "vazamento_mes_atual",
+                      "expression": "`vazamento_mes_atual`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "vazamento_mes_atual",
+                  "displayName": "Não cobrado no último mês"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Não cobrado no último mês"
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 2,
+            "width": 1,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "k_rec",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "resumo",
+                  "fields": [
+                    {
+                      "name": "recuperavel_12_meses",
+                      "expression": "`recuperavel_12_meses`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "recuperavel_12_meses",
+                  "displayName": "Recuperável em 12 meses"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Recuperável em 12 meses",
+                "showDescription": true,
+                "description": "Se o billing for corrigido agora"
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 2,
+            "width": 2,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "tipo",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "por_tipo",
+                  "fields": [
+                    {
+                      "name": "tipo",
+                      "expression": "`tipo`"
+                    },
+                    {
+                      "name": "vazamento_acumulado",
+                      "expression": "`vazamento_acumulado`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "vazamento_acumulado",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "R$"
+                },
+                "y": {
+                  "fieldName": "tipo",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Tipo"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Não cobrado por tipo de vazamento"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 5,
+            "width": 3,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "mensal",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "mensal",
+                  "fields": [
+                    {
+                      "name": "mes",
+                      "expression": "`mes`"
+                    },
+                    {
+                      "name": "vazamento",
+                      "expression": "`vazamento`"
+                    },
+                    {
+                      "name": "tipo",
+                      "expression": "`tipo`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "mes",
+                  "scale": {
+                    "type": "temporal"
+                  },
+                  "displayName": "Mês"
+                },
+                "y": {
+                  "fieldName": "vazamento",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "R$"
+                },
+                "color": {
+                  "fieldName": "tipo",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Tipo"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Não cobrado por mês",
+                "showDescription": true,
+                "description": "Últimos 24 meses"
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 5,
+            "width": 3,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "contratos",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "contratos",
+                  "fields": [
+                    {
+                      "name": "contrato_id",
+                      "expression": "`contrato_id`"
+                    },
+                    {
+                      "name": "cliente",
+                      "expression": "`cliente`"
+                    },
+                    {
+                      "name": "tipo",
+                      "expression": "`tipo`"
+                    },
+                    {
+                      "name": "vazamento_acumulado",
+                      "expression": "`vazamento_acumulado`"
+                    },
+                    {
+                      "name": "vazamento_mes_atual",
+                      "expression": "`vazamento_mes_atual`"
+                    },
+                    {
+                      "name": "recuperavel_12_meses",
+                      "expression": "`recuperavel_12_meses`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 1,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "contrato_id",
+                    "displayName": "Contrato",
+                    "type": "string",
+                    "displayAs": "string"
+                  },
+                  {
+                    "fieldName": "cliente",
+                    "displayName": "Cliente",
+                    "type": "string",
+                    "displayAs": "string"
+                  },
+                  {
+                    "fieldName": "tipo",
+                    "displayName": "Tipo",
+                    "type": "string",
+                    "displayAs": "string"
+                  },
+                  {
+                    "fieldName": "vazamento_acumulado",
+                    "displayName": "Acumulado (R$)",
+                    "type": "decimal",
+                    "displayAs": "number",
+                    "numberFormat": "0,0.00"
+                  },
+                  {
+                    "fieldName": "vazamento_mes_atual",
+                    "displayName": "Último mês (R$)",
+                    "type": "decimal",
+                    "displayAs": "number",
+                    "numberFormat": "0,0.00"
+                  },
+                  {
+                    "fieldName": "recuperavel_12_meses",
+                    "displayName": "Recuperável 12 meses (R$)",
+                    "type": "decimal",
+                    "displayAs": "number",
+                    "numberFormat": "0,0.00"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Contratos com mais receita a recuperar"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 11,
+            "width": 6,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "titulo_q",
+            "multilineTextboxSpec": {
+              "lines": [
+                "## Qualidade da leitura\n",
+                "A auditoria revisa por amostragem campos que a IA leu com confiança alta e mede o acerto real."
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 18,
+            "width": 6,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "q_docs",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "qualidade",
+                  "fields": [
+                    {
+                      "name": "documentos",
+                      "expression": "`documentos`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "documentos",
+                  "displayName": "Documentos lidos"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Documentos lidos"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 20,
+            "width": 1,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "q_campos",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "qualidade",
+                  "fields": [
+                    {
+                      "name": "campos",
+                      "expression": "`campos`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "campos",
+                  "displayName": "Campos extraídos"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Campos extraídos"
+              }
+            }
+          },
+          "position": {
+            "x": 1,
+            "y": 20,
+            "width": 1,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "q_auto",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "qualidade",
+                  "fields": [
+                    {
+                      "name": "automatico",
+                      "expression": "`automatico`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "automatico",
+                  "displayName": "Sem revisão humana"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Sem revisão humana",
+                "showDescription": true,
+                "description": "Fração aceita automaticamente"
+              }
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 20,
+            "width": 1,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "q_aud",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "qualidade",
+                  "fields": [
+                    {
+                      "name": "acerto_medido_na_auditoria",
+                      "expression": "`acerto_medido_na_auditoria`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "acerto_medido_na_auditoria",
+                  "displayName": "Acerto medido na auditoria"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Acerto medido na auditoria"
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 20,
+            "width": 1,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "q_rev",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "qualidade",
+                  "fields": [
+                    {
+                      "name": "campos_revisados",
+                      "expression": "`campos_revisados`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "campos_revisados",
+                  "displayName": "Campos revisados"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Campos revisados"
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 20,
+            "width": 1,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "q_pend",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "qualidade",
+                  "fields": [
+                    {
+                      "name": "campos_pendentes",
+                      "expression": "`campos_pendentes`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "campos_pendentes",
+                  "displayName": "Aguardando revisão"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Aguardando revisão"
+              }
+            }
+          },
+          "position": {
+            "x": 5,
+            "y": 20,
+            "width": 1,
+            "height": 3
+          }
+        }
+      ]
+    }
+  ]
+}

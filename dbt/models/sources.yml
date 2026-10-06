@@ -6,6 +6,10 @@ sources:
     tables:
       - name: campos_finais
         description: Valor final de cada campo de cada documento (extração ou decisão do revisor).
+      - name: fila_revisao
+        description: Campos enviados para revisão humana (confiança baixa e amostra de auditoria).
+      - name: revisoes
+        description: Decisões dos revisores, copiadas do Lakebase.
 
   - name: ledger_gold
     schema: "{{ var('ledger_gold_schema') }}"

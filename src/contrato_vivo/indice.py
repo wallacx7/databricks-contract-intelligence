@@ -10,6 +10,7 @@ import argparse
 import time
 
 MODELO_DE_EMBEDDING = "databricks-gte-large-en"
+DIMENSAO = 1024
 
 
 def nome_do_indice(tabela: str) -> str:
@@ -25,7 +26,7 @@ def main(argv: list[str] | None = None) -> None:
     from databricks.sdk import WorkspaceClient
     from databricks.sdk.service.vectorsearch import (
         DeltaSyncVectorIndexSpecRequest,
-        EmbeddingSourceColumn,
+        EmbeddingVectorColumn,
         PipelineType,
         VectorIndexType,
     )
@@ -42,9 +43,8 @@ def main(argv: list[str] | None = None) -> None:
             delta_sync_index_spec=DeltaSyncVectorIndexSpecRequest(
                 source_table=args.tabela,
                 pipeline_type=PipelineType.TRIGGERED,
-                embedding_source_columns=[
-                    EmbeddingSourceColumn(name="texto", embedding_model_endpoint_name=MODELO_DE_EMBEDDING)
-                ],
+                # Vetores calculados em lote na tabela de origem (atualizar_trechos.sql); o índice só armazena.
+                embedding_vector_columns=[EmbeddingVectorColumn(name="embedding", embedding_dimension=DIMENSAO)],
                 columns_to_sync=[
                     "trecho_id",
                     "documento_id",
@@ -53,13 +53,23 @@ def main(argv: list[str] | None = None) -> None:
                     "tipo_documento",
                     "pagina",
                     "texto",
+                    "embedding",
                 ],  # fmt: skip
             ),
         )
         print(f"Índice criado: {indice}")
     else:
-        w.vector_search_indexes.sync_index(indice)
-        print(f"Sincronização disparada: {indice}")
+        estado = w.vector_search_indexes.get_index(indice).status
+        if estado and estado.ready:
+            try:
+                w.vector_search_indexes.sync_index(indice)
+                print(f"Sincronização disparada: {indice}")
+            except Exception as exc:  # uma sincronização anterior ainda em andamento: só espera ela terminar
+                if "not ready to sync" not in str(exc):
+                    raise
+                print(f"Sincronização anterior em andamento: {indice}")
+        else:
+            print(f"Índice ainda inicializando, aguardando: {indice}")
 
     for _ in range(90):  # espera ficar pronto (até 15 minutos)
         estado = w.vector_search_indexes.get_index(indice).status

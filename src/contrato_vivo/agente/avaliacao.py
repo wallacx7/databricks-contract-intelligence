@@ -32,7 +32,12 @@ def numeros(texto: str) -> list[float]:
 
 def formatos_de_data(d: date) -> list[str]:
     dia = "1º" if d.day == 1 else str(d.day)
-    return [d.strftime("%d/%m/%Y"), f"{dia} de {_MESES[d.month - 1]} de {d.year}", f"{d.day} de {_MESES[d.month - 1]}"]
+    return [
+        d.strftime("%d/%m/%Y"),
+        f"{dia} de {_MESES[d.month - 1]} de {d.year}",
+        f"{d.day} de {_MESES[d.month - 1]}",
+        d.isoformat(),
+    ]
 
 
 @dataclass
@@ -64,8 +69,11 @@ class Resultado:
         return self.valor_ok and self.citacao_ok is not False
 
 
+_HIFENS = str.maketrans({"‐": "-", "‑": "-", "‒": "-", "–": "-", "—": "-"})
+
+
 def conferir(caso: Caso, r: Resposta) -> Resultado:
-    texto = r.texto
+    texto = r.texto.translate(_HIFENS)  # modelos às vezes usam hífen tipográfico em "CT‑2021‑000310"
     if caso.recusa:
         valor_ok, citacao_ok = RECUSA.lower() in texto.lower(), None
     else:
@@ -83,7 +91,11 @@ def conferir(caso: Caso, r: Resposta) -> Resultado:
 
 
 def gerar_casos(
-    documentos: list[dict], vazamentos: dict[str, float], n_contratos: int = 12, seed: int = 7
+    documentos: list[dict],
+    vazamentos: dict[str, float],
+    n_contratos: int = 12,
+    seed: int = 7,
+    excluir: set[str] | None = None,
 ) -> list[Caso]:
     """Perguntas a partir do gabarito; só clientes de nome único, para a pergunta não ser ambígua."""
     por_contrato: dict[str, list[dict]] = {}
@@ -91,7 +103,9 @@ def gerar_casos(
         por_contrato.setdefault(d["contrato_id"], []).append(d)
     nomes = [d["cliente"] for d in documentos if d["tipo"] == "contrato"]
     unicos = {n for n in nomes if nomes.count(n) == 1}
-    candidatos = sorted(c for c, docs in por_contrato.items() if docs[0]["cliente"] in unicos)
+    candidatos = sorted(
+        c for c, docs in por_contrato.items() if docs[0]["cliente"] in unicos and c not in (excluir or set())
+    )
     rng = random.Random(seed)
     com_aditivo = [c for c in candidatos if len(por_contrato[c]) > 1]
     com_vazamento = [c for c in candidatos if c in vazamentos]
@@ -146,6 +160,12 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--modelo", default="databricks-gpt-oss-120b")
     parser.add_argument("--experimento", default=None)
     parser.add_argument("--saida", default="avaliacao_agente.json")
+    parser.add_argument(
+        "--conjunto",
+        choices=["ajuste", "controle"],
+        default="ajuste",
+        help="ajuste: usado para melhorar o agente; controle: outros contratos, nunca usados em ajustes.",
+    )
     args = parser.parse_args(argv)
 
     from databricks.sdk import WorkspaceClient
@@ -164,7 +184,13 @@ def main(argv: list[str] | None = None) -> None:
         f"format => 'csv', header => true) WHERE CAST(mes AS DATE) <= DATE'{ultimo}' GROUP BY contrato_id",
         {},
     )
-    casos = gerar_casos(documentos, {v["contrato_id"]: v["total"] for v in vaz})
+    vazamentos = {v["contrato_id"]: v["total"] for v in vaz}
+    ajuste = gerar_casos(documentos, vazamentos, seed=7)
+    if args.conjunto == "ajuste":
+        casos = ajuste
+    else:
+        usados = {re.search(r"CT-\d{4}-\d{6}", c.documento or c.pergunta).group(0) for c in ajuste if c.documento}
+        casos = [c for c in gerar_casos(documentos, vazamentos, seed=101, excluir=usados)]
     agente = AgenteDeContratos(
         DatabricksChatModel(args.modelo),
         sql,
@@ -205,7 +231,7 @@ def main(argv: list[str] | None = None) -> None:
 
         mlflow.set_tracking_uri("databricks")
         mlflow.set_experiment(args.experimento)
-        with mlflow.start_run(run_name=f"agente_{args.modelo}"):
+        with mlflow.start_run(run_name=f"{args.conjunto}_{args.modelo}"):
             mlflow.log_metrics({k: float(v) for k, v in resumo.items()})
             mlflow.log_artifact(args.saida)
     if resumo["acerto"] < 0.0:

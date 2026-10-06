@@ -39,6 +39,7 @@ def brl(valor: float) -> str:
 
 
 _DINHEIRO = {"preco_usuario", "vazamento_acumulado", "vazamento_mes_atual", "recuperavel_12_meses"}
+_DATA = {"data_assinatura", "inicio_vigencia", "fim_vigencia", "primeiro_mes", "ultimo_mes"}
 _PERCENTUAL = {"desconto_anual_percentual", "desconto_promocional_percentual", "reajuste_percentual",
                "multa_percentual"}  # fmt: skip
 
@@ -49,6 +50,9 @@ def apresentar(linha: dict) -> dict:
     campo = linha.get("campo")
     for chave, valor in linha.items():
         nome = campo if chave == "valor" and campo else chave
+        if nome in _DATA and isinstance(valor, str) and re.match(r"^\d{4}-\d{2}-\d{2}", valor):
+            out[chave] = f"{valor[8:10]}/{valor[5:7]}/{valor[0:4]}"
+            continue
         try:
             numero = float(valor)
         except (TypeError, ValueError):

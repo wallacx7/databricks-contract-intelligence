@@ -1,0 +1,8 @@
+resources:
+  dashboards:
+    vazamento:
+      display_name: Contrato Vivo · Vazamento de Receita
+      file_path: ../src/dashboards/vazamento.lvdash.json
+      warehouse_id: ${var.warehouse_id}
+      dataset_catalog: ${var.catalog}
+      dataset_schema: ${resources.schemas.gold.name}

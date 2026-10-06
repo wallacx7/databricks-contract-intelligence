@@ -1,5 +1,6 @@
 # Dependências da Databricks App (src/app.py). O pacote contrato_vivo é importado direto de src/.
 databricks-sdk>=0.117
+databricks-openai>=0.6
 psycopg[binary]>=3.2
 pypdfium2>=4.30
 streamlit>=1.38

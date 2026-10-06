@@ -22,22 +22,29 @@
 
 ## Fase 2: Revisão humana
 
-- [ ] Fila de revisão no Lakebase
-- [ ] Databricks App de revisão com o trecho do contrato ao lado do valor
-- [ ] Decisões de volta ao lakehouse
+- [x] Fila de revisão no Lakebase (confiança baixa e auditoria de 2%)
+- [x] Databricks App de revisão com a página do contrato ao lado do valor
+- [x] Decisões de volta ao lakehouse pelo catálogo do Unity Catalog
 
 ## Fase 3: Reconciliação
 
-- [ ] Contrato vigente (contrato + aditivos + correções) em dbt
-- [ ] Reconciliação com o billing e vazamento por tipo
-- [ ] Testes contra o gabarito e dashboard
+- [x] Contrato vigente (contrato + aditivos + correções) em dbt
+- [x] Reconciliação com o billing e vazamento por tipo (idêntico ao plantado)
+- [x] Testes contra o gabarito e dashboard
 
 ## Fase 4: Perguntas sobre contratos
 
-- [ ] Trechos indexados no Vector Search
-- [ ] Agente com citação de contrato, página e cláusula
-- [ ] Avaliação com LLM como juiz
+- [x] Trechos indexados no Vector Search, com embeddings em lote
+- [x] Agente com citação de documento e página
+- [x] Avaliação com valor e página citada (controle: 94,8%)
 
 ## Fase 5: Lançamento
 
-- [ ] README, ADRs, prints e post
+- [x] README e ADRs 001 a 005
+- [ ] Prints, GIF e post
+- [ ] Repositório público
+
+## Próximos passos
+
+- [ ] Agente: total do vazamento quando há mais de um tipo; pesquisa pelo nome exato do cliente; novo conjunto de controle
+- [ ] Novo conjunto de controle de extração com os clientes restantes

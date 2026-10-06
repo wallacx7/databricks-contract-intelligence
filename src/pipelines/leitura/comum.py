@@ -73,9 +73,24 @@ def _pagina(coluna: str, tipo: str) -> str:
     elif tipo == "inteiro":
         agulha = f"concat(CAST({coluna} AS INT), ' (')"
     elif tipo == "data":
-        agulha = f"date_format(try_to_date({coluna}), 'dd/MM/yyyy')"
+        # Contratos escrevem datas como 09/02/2023 ou "9 de fevereiro de 2023" (e "1º de" no dia primeiro).
+        d = f"try_to_date({coluna})"
+        meses = (
+            "array('janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', "
+            "'outubro', 'novembro', 'dezembro')"
+        )
+        curta = f"date_format({d}, 'dd/MM/yyyy')"
+        longa = (
+            f"concat(CASE WHEN day({d}) = 1 THEN '1º' ELSE CAST(day({d}) AS STRING) END, ' de ', "
+            f"element_at({meses}, month({d})), ' de ', year({d}))"
+        )
+        return f"coalesce({_achar_pagina(curta)}, {_achar_pagina(longa)})"
     else:
         agulha = f"CAST({coluna} AS STRING)"
+    return _achar_pagina(agulha)
+
+
+def _achar_pagina(agulha: str) -> str:
     # O texto tem um marcador "[página N]" antes de cada elemento lido do PDF.
     # Funções literais (sem expressão regular): replace troca o marcador por um separador e split corta nele.
     trechos = f"split(replace({_TEXTO}, '[página ', '§§'), '§§')"

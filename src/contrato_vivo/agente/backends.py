@@ -107,9 +107,17 @@ class BuscaVetorial:
 
     COLUNAS = ["documento_id", "contrato_id", "cliente", "tipo_documento", "pagina", "texto"]
 
-    def __init__(self, indice: str, client: WorkspaceClient | None = None) -> None:
+    def __init__(
+        self, indice: str, client: WorkspaceClient | None = None, modelo_embedding: str = "databricks-gte-large-en"
+    ) -> None:
         self.w = client or WorkspaceClient()
         self.indice = indice
+        self.modelo_embedding = modelo_embedding
+
+    def _vetor(self, texto: str) -> list[float]:
+        """Embedding da consulta, com o mesmo modelo usado nos trechos."""
+        r = self.w.serving_endpoints.query(name=self.modelo_embedding, input=[texto])
+        return list(r.data[0].embedding)
 
     def buscar(self, consulta: str, contrato_id: str | None, limite: int = 5) -> list[dict]:
         import json
@@ -118,7 +126,8 @@ class BuscaVetorial:
         r = self.w.vector_search_indexes.query_index(
             index_name=self.indice,
             columns=self.COLUNAS,
-            query_text=consulta,
+            query_text=consulta,  # busca por palavras; junto com o vetor forma a busca híbrida
+            query_vector=self._vetor(consulta),
             filters_json=filtros,
             num_results=limite,
             query_type="HYBRID",

@@ -58,6 +58,7 @@ resources:
               catalog: ${var.catalog}
               silver_schema: ${resources.schemas.silver.name}
               gold_schema: ${resources.schemas.gold.name}
+              modelo_embedding: databricks-gte-large-en
 
         - task_key: indice_de_busca
           depends_on:
