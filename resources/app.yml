@@ -1,0 +1,26 @@
+resources:
+  apps:
+    contrato_vivo:
+      name: contrato-vivo
+      description: Revisão humana dos campos extraídos dos contratos.
+      # O código da app (src/app.py) importa o pacote contrato_vivo direto de src/.
+      source_code_path: ../src
+      config:
+        command: ["streamlit", "run", "app.py", "--server.headless", "true"]
+        env:
+          - name: CONTRATO_VIVO_CATALOG
+            value: ${var.catalog}
+          - name: CONTRATO_VIVO_SILVER
+            value: ${resources.schemas.silver.name}
+          - name: DATABRICKS_WAREHOUSE_ID
+            value_from: sql-warehouse
+      resources:
+        - name: sql-warehouse
+          sql_warehouse:
+            id: ${var.warehouse_id}
+            permission: CAN_USE
+        - name: banco-revisao
+          database:
+            instance_name: ${resources.database_instances.instancia_revisao.name}
+            database_name: revisao
+            permission: CAN_CONNECT_AND_CREATE

@@ -1,0 +1,35 @@
+name: contrato_vivo
+version: "1.0.0"
+config-version: 2
+profile: contrato_vivo
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+
+# Schemas físicos do ambiente, repassados pelo job (--vars).
+vars:
+  lc_silver_schema: lc_silver
+  lc_gold_schema: lc_gold
+  ledger_gold_schema: gold
+  ledger_metrics_schema: metrics
+  gabarito_path: /Volumes/workspace/lc_raw/gabarito
+  # Diferenças de arredondamento abaixo disto (por usuário) não são vazamento.
+  tolerancia_por_usuario: 0.05
+
+models:
+  contrato_vivo:
+    +persist_docs:
+      relation: true
+      columns: true
+    staging:
+      +schema: lc_gold
+      +materialized: view
+    gold:
+      +schema: lc_gold
+      +materialized: table
+
+seeds:
+  contrato_vivo:
+    +schema: lc_gold

@@ -59,3 +59,25 @@ def _no_texto(coluna: str, tipo: str) -> str:
             f"(instr({_TEXTO}, concat(CAST({coluna} AS INT), ' (')) > 0 OR instr({_TEXTO}, CAST({coluna} AS INT)) > 0)"
         )
     return "NULL"
+
+
+def _pagina(coluna: str, tipo: str) -> str:
+    """Primeira página em que o valor aparece escrito (para a revisão abrir o documento no lugar certo)."""
+    if tipo == "dinheiro":
+        agulha = f"concat('R$ ', translate(format_number({coluna}, 2), ',.', '.,'))"
+    elif tipo == "percentual":
+        agulha = (
+            f"concat(regexp_replace(regexp_replace(translate(format_number({coluna}, 2), ',.', '.,'), "
+            f"'0+$', ''), ',$', ''), '%')"
+        )
+    elif tipo == "inteiro":
+        agulha = f"concat(CAST({coluna} AS INT), ' (')"
+    elif tipo == "data":
+        agulha = f"date_format(try_to_date({coluna}), 'dd/MM/yyyy')"
+    else:
+        agulha = f"CAST({coluna} AS STRING)"
+    # O texto tem um marcador "[página N]" antes de cada elemento lido do PDF.
+    # Funções literais (sem expressão regular): replace troca o marcador por um separador e split corta nele.
+    trechos = f"split(replace({_TEXTO}, '[página ', '§§'), '§§')"
+    achado = f"try_element_at(filter({trechos}, p -> instr(lower(p), lower({agulha})) > 0), 1)"
+    return f"try_cast(substring_index({achado}, ']', 1) AS INT)"

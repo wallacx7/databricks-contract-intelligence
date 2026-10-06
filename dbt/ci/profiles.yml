@@ -1,0 +1,11 @@
+# Perfil usado só para `dbt parse` no CI e localmente; não conecta em nada.
+contrato_vivo:
+  target: ci
+  outputs:
+    ci:
+      type: databricks
+      host: example.cloud.databricks.com
+      http_path: /sql/1.0/warehouses/ci
+      token: "{{ env_var('DATABRICKS_TOKEN', 'nao-usado-no-parse') }}"
+      catalog: workspace
+      schema: lc_gold

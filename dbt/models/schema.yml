@@ -1,0 +1,33 @@
+version: 2
+
+models:
+  - name: stg_documentos
+    description: Uma linha por documento com os campos finais tipados.
+    columns:
+      - name: documento_id
+        data_tests: [unique, not_null]
+      - name: account_id
+        data_tests: [not_null]
+
+  - name: termos_mensais
+    description: Documento vigente, preço devido pelo contrato e preço cobrado pelo billing, por contrato e mês.
+    columns:
+      - name: preco_devido
+        description: Preço por usuário que o contrato manda cobrar no mês.
+        data_tests: [not_null]
+      - name: preco_cobrado
+        description: Preço por usuário que o billing do Ledger cobrou no mês.
+
+  - name: vazamento_mensal
+    description: Receita que o contrato dá direito de cobrar e o billing não cobrou, por contrato, mês e tipo.
+    columns:
+      - name: tipo
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [desconto_vencido, preco_abaixo, reajuste_nao_aplicado, minimo_nao_cobrado]
+      - name: vazamento
+        description: Valor não cobrado no mês, em reais.
+
+  - name: vazamento_por_contrato
+    description: Vazamento acumulado e atual por contrato e tipo, com o recuperável nos próximos 12 meses.

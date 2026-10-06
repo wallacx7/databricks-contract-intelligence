@@ -4,7 +4,7 @@ Tudo que chama modelo é streaming table: cada documento novo é lido e extraíd
 reprocessamento não gasta tokens de novo. A comparação entre os modelos é uma materialized view, barata.
 """
 
-from comum import MODELOS, ORIGEM, _no_texto, _normalizado, bronze, silver, spark
+from comum import MODELOS, ORIGEM, _no_texto, _normalizado, _pagina, bronze, silver, spark
 from esquema import CAMPOS, FORMATOS, INSTRUCOES, json_schema, struct_ddl
 from pyspark import pipelines as dp
 from pyspark.sql import functions as F
@@ -146,6 +146,7 @@ def campos():
                 F.expr(_normalizado(vb, tipo)).alias("valor_segundo_modelo"),
                 F.expr(f"{_no_texto(va, tipo)}").alias("ancorado"),
                 F.expr(_valido(campo, va)).alias("valido"),
+                F.expr(_pagina(va, tipo)).alias("pagina"),
             )
         )
     todos = linhas[0]

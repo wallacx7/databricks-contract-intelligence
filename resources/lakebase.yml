@@ -1,0 +1,13 @@
+resources:
+  database_instances:
+    instancia_revisao:
+      name: contrato-vivo
+      capacity: CU_1
+
+  database_catalogs:
+    catalogo_revisao:
+      # Registra o banco Postgres no Unity Catalog: as decisões dos revisores ficam consultáveis em SQL.
+      database_instance_name: ${resources.database_instances.instancia_revisao.name}
+      database_name: revisao
+      name: lc_revisao
+      create_database_if_not_exists: true

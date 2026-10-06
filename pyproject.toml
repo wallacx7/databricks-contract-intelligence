@@ -14,6 +14,7 @@ dependencies = [
     "pypdf>=4.3",
     "pypdfium2>=4.30",
     "pillow>=10.4",
+    "psycopg[binary]>=3.2",
 ]
 
 [project.optional-dependencies]
@@ -29,6 +30,7 @@ dev = [
 [project.scripts]
 contrato-vivo-gerar = "contrato_vivo.gerador.cli:main"
 contrato-vivo-reprocessar = "contrato_vivo.reprocessar:main"
+contrato-vivo-revisor-simulado = "contrato_vivo.revisao.simulado:main"
 
 [tool.hatch.metadata]
 allow-direct-references = true

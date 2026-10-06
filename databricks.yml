@@ -15,6 +15,20 @@ variables:
   ledger_silver_schema:
     description: Schema Silver do Ledger, de onde vêm contas e assinaturas (ADR 001).
     default: silver
+  ledger_gold_schema:
+    description: Schema Gold do Ledger (snapshot mensal de MRR), confrontado com os contratos.
+    default: gold
+  ledger_metrics_schema:
+    description: Schema de métricas do Ledger (meses fechados).
+    default: metrics
+  dbt_vars:
+    description: Schemas físicos do ambiente, repassados ao dbt.
+    default: >-
+      {"lc_silver_schema": "${resources.schemas.silver.name}",
+      "lc_gold_schema": "${resources.schemas.gold.name}",
+      "ledger_gold_schema": "${var.ledger_gold_schema}",
+      "ledger_metrics_schema": "${var.ledger_metrics_schema}",
+      "gabarito_path": "/Volumes/${var.catalog}/${resources.schemas.raw.name}/${resources.volumes.gabarito.name}"}
   llm_endpoint:
     description: Modelo servido no workspace usado na extração e nas respostas.
     default: databricks-gpt-oss-120b
@@ -36,6 +50,8 @@ targets:
     variables:
       # Em dev, o Ledger publica a Silver com o prefixo do usuário.
       ledger_silver_schema: dev_${workspace.current_user.short_name}_silver
+      ledger_gold_schema: dev_${workspace.current_user.short_name}_gold
+      ledger_metrics_schema: dev_${workspace.current_user.short_name}_metrics
 
   prod:
     mode: production

@@ -1,0 +1,19 @@
+version: 2
+
+sources:
+  - name: contrato_vivo
+    schema: "{{ var('lc_silver_schema') }}"
+    tables:
+      - name: campos_finais
+        description: Valor final de cada campo de cada documento (extração ou decisão do revisor).
+
+  - name: ledger_gold
+    schema: "{{ var('ledger_gold_schema') }}"
+    description: Gold do Ledger, o billing que a reconciliação confronta com os contratos.
+    tables:
+      - name: fct_mrr_snapshot_mensal
+
+  - name: ledger_metrics
+    schema: "{{ var('ledger_metrics_schema') }}"
+    tables:
+      - name: mrr_mensal
