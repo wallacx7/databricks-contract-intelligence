@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+
+# Databricks
+.databricks/
+
+# Segredos
+.env
+.databrickscfg
+
+# Dados gerados localmente
+data/
+
+# Notas privadas (repositório separado)
+_planejamento/
+
+# dbt
+dbt/target/
+dbt/logs/
+dbt/dbt_packages/
+.user.yml
+
+# Editores
+.vscode/
+.idea/

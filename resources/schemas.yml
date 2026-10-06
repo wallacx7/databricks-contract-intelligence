@@ -1,0 +1,33 @@
+resources:
+  # Prefixo lc_ (live contract): o projeto divide o catálogo com o Ledger, que já usa raw, bronze, silver...
+  schemas:
+    raw:
+      catalog_name: ${var.catalog}
+      name: lc_raw
+      comment: Contratos em PDF e gabarito do gerador.
+    bronze:
+      catalog_name: ${var.catalog}
+      name: lc_bronze
+      comment: Documentos lidos e texto extraído por página.
+    silver:
+      catalog_name: ${var.catalog}
+      name: lc_silver
+      comment: Campos extraídos pela IA, validados, com nota de confiança e decisões da revisão humana.
+    gold:
+      catalog_name: ${var.catalog}
+      name: lc_gold
+      comment: Contrato vigente por cliente, reconciliação com o billing e vazamento de receita.
+
+  volumes:
+    contratos:
+      catalog_name: ${var.catalog}
+      schema_name: ${resources.schemas.raw.name}
+      name: contratos
+      volume_type: MANAGED
+      comment: PDFs dos contratos e aditivos, como chegariam do sistema de gestão de contratos.
+    gabarito:
+      catalog_name: ${var.catalog}
+      schema_name: ${resources.schemas.raw.name}
+      name: gabarito
+      volume_type: MANAGED
+      comment: Valor correto de cada campo e vazamentos plantados pelo gerador. Usado só em testes e avaliação.

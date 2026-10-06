@@ -1,0 +1,38 @@
+bundle:
+  name: contrato-vivo
+
+include:
+  - resources/*.yml
+
+variables:
+  catalog:
+    description: Catálogo do Unity Catalog onde ficam os schemas do projeto.
+    default: workspace
+  warehouse_id:
+    description: SQL warehouse usado pelas tarefas SQL.
+    lookup:
+      warehouse: Serverless Starter Warehouse
+  ledger_silver_schema:
+    description: Schema Silver do Ledger, de onde vêm contas e assinaturas (ADR 001).
+    default: silver
+  llm_endpoint:
+    description: Modelo servido no workspace usado na extração e nas respostas.
+    default: databricks-gpt-oss-120b
+
+artifacts:
+  contrato_vivo_wheel:
+    type: whl
+    build: python -m build --wheel
+    path: .
+
+targets:
+  dev:
+    # O modo development prefixa schemas e jobs com "dev_<usuário>_": cada desenvolvedor tem seu ambiente.
+    mode: development
+    default: true
+    variables:
+      # Em dev, o Ledger publica a Silver com o prefixo do usuário.
+      ledger_silver_schema: dev_${workspace.current_user.short_name}_silver
+
+  prod:
+    mode: production

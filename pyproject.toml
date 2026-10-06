@@ -1,0 +1,46 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "contrato-vivo"
+version = "0.1.0"
+description = "Leitura de contratos com IA no Databricks para encontrar receita não cobrada"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "databricks-sdk>=0.117",
+    "reportlab>=4.2",
+    "pypdf>=4.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "ruff>=0.6",
+    "build>=1.2",
+    "pre-commit>=3.7",
+    # Simulador do Ledger: fornece o billing real nos testes de integração do gerador.
+    "ledger @ git+https://github.com/wallacx7/databricks-revenue-agent@main",
+]
+
+[project.scripts]
+contrato-vivo-gerar = "contrato_vivo.gerador.cli:main"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/contrato_vivo"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
