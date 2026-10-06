@@ -25,6 +25,7 @@ def avaliacao_campos():
         df = gabarito.select(
             "documento_id",
             "modelo",
+            F.coalesce("digitalizado", F.lit("digital")).alias("digitalizacao"),
             F.lit(campo).alias("campo"),
             F.expr(_normalizado(f"`{coluna}`", tipo)).alias("esperado"),
         )

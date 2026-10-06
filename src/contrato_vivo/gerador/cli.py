@@ -24,6 +24,7 @@ from pathlib import Path
 
 from pypdf import PdfReader
 
+from contrato_vivo.gerador.digitalizar import digitalizar, sortear_nivel
 from contrato_vivo.gerador.extenso import data_curta, data_longa, percentual, reais
 from contrato_vivo.gerador.pdf import renderizar
 from contrato_vivo.gerador.termos import Documento, Resultado, gerar
@@ -54,10 +55,15 @@ def escrever(resultado: Resultado, saida: Path, gabarito: Path) -> dict[str, int
         shutil.rmtree(ano_dir, ignore_errors=True)  # geração anterior
     gabarito.mkdir(parents=True, exist_ok=True)
 
-    paginas_total = 0
+    paginas_total = digitalizados = 0
     with open(gabarito / "documentos.jsonl", "w", encoding="utf-8") as fh:
         for doc in resultado.documentos:
             pdf = renderizar(doc)
+            paginas = paginas_dos_campos(doc, pdf)  # antes de digitalizar: o PDF escaneado não tem texto
+            nivel = sortear_nivel(doc.documento_id)
+            if nivel:
+                pdf = digitalizar(pdf, nivel, doc.documento_id)
+                digitalizados += 1
             destino = saida / str(doc.data_assinatura.year) / f"{doc.documento_id}.pdf"
             destino.parent.mkdir(parents=True, exist_ok=True)
             destino.write_bytes(pdf)
@@ -65,8 +71,9 @@ def escrever(resultado: Resultado, saida: Path, gabarito: Path) -> dict[str, int
                 **doc.campos_esperados(),
                 "arquivo": f"{doc.data_assinatura.year}/{doc.documento_id}.pdf",
                 "modelo": doc.modelo,
+                "digitalizado": nivel,
                 "vazamento_plantado": doc.vazamento_plantado,
-                "paginas": paginas_dos_campos(doc, pdf),
+                "paginas": paginas,
             }
             paginas_total += len(PdfReader(io.BytesIO(pdf)).pages)
             fh.write(json.dumps(registro, ensure_ascii=False) + "\n")
@@ -113,7 +120,8 @@ def main(argv: list[str] | None = None) -> None:
     resumo = escrever(resultado, args.saida, args.gabarito)
     plantados = sum(1 for d in resultado.documentos if d.vazamento_plantado)
     print(
-        f"{resumo['documentos']} documentos ({resumo['paginas']} páginas), {plantados} contratos com vazamento "
+        f"{resumo['documentos']} documentos ({resumo['digitalizados']} digitalizados, {resumo['paginas']} páginas), "
+        f"{plantados} contratos com vazamento "
         f"plantado, {resumo['linhas_de_vazamento']} meses com vazamento. {time.perf_counter() - t0:.0f} s"
     )
 
