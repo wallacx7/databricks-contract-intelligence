@@ -29,6 +29,9 @@ variables:
       "ledger_gold_schema": "${var.ledger_gold_schema}",
       "ledger_metrics_schema": "${var.ledger_metrics_schema}",
       "gabarito_path": "/Volumes/${var.catalog}/${resources.schemas.raw.name}/${resources.volumes.gabarito.name}"}
+  vector_search_endpoint:
+    description: Endpoint do Vector Search que hospeda o índice dos trechos.
+    default: contrato-vivo
   llm_endpoint:
     description: Modelo servido no workspace usado na extração e nas respostas.
     default: databricks-gpt-oss-120b

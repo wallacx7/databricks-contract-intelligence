@@ -14,6 +14,8 @@ resources:
             path: ../src/pipelines/leitura/avaliacao.py
         - file:
             path: ../src/pipelines/leitura/revisao.py
+        - file:
+            path: ../src/pipelines/leitura/trechos.py
       configuration:
         contrato_vivo.catalog: ${var.catalog}
         contrato_vivo.raw_schema: ${resources.schemas.raw.name}

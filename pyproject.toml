@@ -26,11 +26,15 @@ dev = [
     # Simulador do Ledger: fornece o billing real nos testes de integração do gerador.
     "ledger @ git+https://github.com/wallacx7/databricks-revenue-agent@main",
 ]
+dbt = ["dbt-databricks>=1.9,<2.0"]
+agente = ["databricks-openai>=0.6", "mlflow-skinny>=3.1"]
 
 [project.scripts]
 contrato-vivo-gerar = "contrato_vivo.gerador.cli:main"
 contrato-vivo-reprocessar = "contrato_vivo.reprocessar:main"
 contrato-vivo-revisor-simulado = "contrato_vivo.revisao.simulado:main"
+contrato-vivo-indice = "contrato_vivo.indice:main"
+contrato-vivo-avaliar-agente = "contrato_vivo.agente.avaliacao:main"
 
 [tool.hatch.metadata]
 allow-direct-references = true

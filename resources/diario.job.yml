@@ -47,6 +47,31 @@ resources:
             commands:
               - dbt build --vars '${var.dbt_vars}'
 
+        - task_key: atualizar_trechos
+          depends_on:
+            - task_key: leitura
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ../src/sql/atualizar_trechos.sql
+            parameters:
+              catalog: ${var.catalog}
+              silver_schema: ${resources.schemas.silver.name}
+              gold_schema: ${resources.schemas.gold.name}
+
+        - task_key: indice_de_busca
+          depends_on:
+            - task_key: atualizar_trechos
+          environment_key: default
+          python_wheel_task:
+            package_name: contrato_vivo
+            entry_point: contrato-vivo-indice
+            parameters:
+              - --tabela
+              - ${var.catalog}.${resources.schemas.gold.name}.trechos_indice
+              - --endpoint
+              - ${var.vector_search_endpoint}
+
       environments:
         - environment_key: dbt
           spec:
