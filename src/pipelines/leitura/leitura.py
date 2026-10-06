@@ -5,7 +5,7 @@ reprocessamento não gasta tokens de novo. A comparação entre os modelos é um
 """
 
 from comum import MODELOS, ORIGEM, _no_texto, _normalizado, bronze, silver, spark
-from esquema import CAMPOS, INSTRUCOES, json_schema, struct_ddl
+from esquema import CAMPOS, FORMATOS, INSTRUCOES, json_schema, struct_ddl
 from pyspark import pipelines as dp
 from pyspark.sql import functions as F
 
@@ -98,7 +98,8 @@ for _modelo in MODELOS:
     name=silver("campos"),
     comment=(
         "Um registro por documento e campo, com o valor de cada modelo, concordância, ancoragem no texto e "
-        "confiança. Confiança alta: os modelos concordam e, para números, o valor aparece escrito no documento."
+        "confiança. Confiança alta: os modelos concordam, números aparecem escritos no documento e identificadores "
+        "têm formato válido e coerente entre si."
     ),
 )
 def campos():
@@ -120,7 +121,18 @@ def campos():
         .select("documento_id", "texto")
         .alias("t")
     )
-    base = a.join(b, "documento_id", "left").join(lidos, "documento_id")
+    base = (
+        a.join(b, "documento_id", "left")
+        .join(lidos, "documento_id")
+        # Convenção do sistema de contratos: o número do contrato termina com os dígitos do código do cliente.
+        .withColumn(
+            "ids_coerentes",
+            F.expr(
+                "regexp_extract(lower(a.campos.contrato_id), '([0-9]{6})$', 1) "
+                "<=> regexp_extract(lower(a.campos.codigo_cliente), '([0-9]{6})$', 1)"
+            ),
+        )
+    )
 
     linhas = []
     for campo, (_, tipo) in CAMPOS.items():
@@ -133,15 +145,26 @@ def campos():
                 F.expr(_normalizado(va, tipo)).alias("valor"),
                 F.expr(_normalizado(vb, tipo)).alias("valor_segundo_modelo"),
                 F.expr(f"{_no_texto(va, tipo)}").alias("ancorado"),
+                F.expr(_valido(campo, va)).alias("valido"),
             )
         )
     todos = linhas[0]
     for df in linhas[1:]:
         todos = todos.unionByName(df)
     concordam = F.expr("valor <=> valor_segundo_modelo")
+    ancorado_ok = F.col("ancorado").isNull() | F.col("ancorado") | F.col("valor").isNull()
+    valido_ok = F.col("valido").isNull() | F.col("valido")
     return todos.withColumn("concordam", concordam).withColumn(
-        "confianca",
-        F.when(
-            concordam & (F.col("ancorado").isNull() | F.col("ancorado") | F.col("valor").isNull()), "alta"
-        ).otherwise("baixa"),
+        "confianca", F.when(concordam & ancorado_ok & valido_ok, "alta").otherwise("baixa")
     )
+
+
+def _valido(campo: str, coluna: str) -> str:
+    """Formato e coerência de identificadores; NULL para campos sem regra.
+
+    Os dois modelos leem o mesmo texto do OCR: se a leitura perde um caractere, eles concordam no erro.
+    A validação não depende da leitura e pega esse caso.
+    """
+    if campo not in FORMATOS:
+        return "NULL"
+    return f"(lower({coluna}) RLIKE '{FORMATOS[campo]}' AND ids_coerentes)"

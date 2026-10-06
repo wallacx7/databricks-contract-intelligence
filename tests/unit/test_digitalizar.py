@@ -43,3 +43,18 @@ def test_sorteio_estavel_e_na_proporcao_esperada():
     assert abs(proporcao - PROBABILIDADE) < 0.02
     contagem = Counter(n for n in niveis if n)
     assert contagem["leve"] > contagem["medio"] > contagem["forte"] > 0
+
+
+def test_escrita_registra_digitalizados_no_resumo_e_no_gabarito(tmp_path):
+    import json
+
+    from contrato_vivo.gerador.cli import escrever
+
+    contas, versoes = de_simulador(simulate(SimulationConfig(start=date(2025, 6, 1), end=date(2026, 9, 30), seed=4)))
+    resultado = gerar(contas, versoes, date(2026, 9, 1), limite=40)
+    resumo = escrever(resultado, tmp_path / "contratos", tmp_path / "gabarito")
+    registros = [
+        json.loads(linha) for linha in (tmp_path / "gabarito" / "documentos.jsonl").read_text("utf-8").splitlines()
+    ]
+    assert resumo["documentos"] == len(registros)
+    assert resumo["digitalizados"] == sum(1 for r in registros if r["digitalizado"])

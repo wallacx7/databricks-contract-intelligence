@@ -53,6 +53,7 @@ def escrever(resultado: Resultado, saida: Path, gabarito: Path) -> dict[str, int
         shutil.rmtree(pasta / "_tmp", ignore_errors=True)
     for ano_dir in saida.glob("[0-9][0-9][0-9][0-9]"):
         shutil.rmtree(ano_dir, ignore_errors=True)  # geração anterior
+    shutil.rmtree(saida / "reprocessar", ignore_errors=True)  # cópias de reprocessamento da geração anterior
     gabarito.mkdir(parents=True, exist_ok=True)
 
     paginas_total = digitalizados = 0
@@ -88,6 +89,7 @@ def escrever(resultado: Resultado, saida: Path, gabarito: Path) -> dict[str, int
             writer.writerow(linha)
     return {
         "documentos": len(resultado.documentos),
+        "digitalizados": digitalizados,
         "paginas": paginas_total,
         "linhas_de_vazamento": len(resultado.vazamentos),
     }

@@ -32,6 +32,13 @@ CAMPOS: dict[str, tuple[str, str]] = {
     "multa_limite_mensalidades": ("integer", "inteiro"),
 }
 
+# Formato esperado de identificadores (valores normalizados em minúsculas). Um OCR que perde ou troca caracteres
+# produz um valor fora do formato mesmo quando os dois modelos concordam, porque ambos leem o mesmo texto.
+FORMATOS = {
+    "contrato_id": r"^ct-[0-9]{4}-[0-9]{6}$",
+    "codigo_cliente": r"^nim-[0-9]{6}$",
+}
+
 _ENUMS = {
     "tipo_documento": ["contrato", "aditivo"],
     "periodicidade": ["mensal", "anual"],

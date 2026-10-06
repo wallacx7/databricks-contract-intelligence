@@ -16,7 +16,9 @@
 - [x] Avaliação da extração por campo contra o gabarito, separando desenvolvimento e controle
 - [x] Reprocessamento de leituras que falharam
 - [x] Resultado no conjunto de controle: 99,99% em 9.100 campos, 0 erros com confiança alta
-- [ ] Lote de documentos digitalizados com ruído, para tornar a extração e a fila de revisão realistas
+- [x] Lote de documentos digitalizados com ruído (14% dos documentos, três níveis)
+- [x] Validação de formato e coerência de identificadores como terceiro sinal de confiança
+- [ ] Novo conjunto de controle com os clientes restantes (fase final)
 
 ## Fase 2: Revisão humana
 
